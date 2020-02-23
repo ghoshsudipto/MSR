@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 pd.plotting.register_matplotlib_converters()
-plt.style.use('ggplot')
 pd.set_option('display.max_column', 5000)
 pd.set_option('display.max_row', 5000)
 pd.set_option('display.width', 5000)
+plt.style.use('seaborn')
 
 slippage = 0.001
 
@@ -48,7 +48,6 @@ print(' \n-o-o-o-o-o  RISK MEASURES  o-o-o-o-o-\n')
 netPL = np.around(df['Cumulative'].iloc[-1]*100, decimals=2)
 print('Net P/L:\n\t', netPL, '% (Unleveraged)')
 
-
 df['Payoff'].replace(0, np.NaN, inplace=True)
 sharpe = np.around((252**0.5)*(df['Payoff'].mean()/np.std(df['Payoff'])), decimals=4)
 print('Sharpe Ratio:\n\t', sharpe)
@@ -75,12 +74,42 @@ for i in df['Cumulative']:
 df['Drawdown'] = drawdown
 max_drawdown = np.around((np.nanmax(df['Drawdown'].values*100)), decimals=2)
 print('Max Drawdown:\n\t', max_drawdown, '%')
+'''
+Plotting two different plots in one figure.
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
 
-plt.plot(df.index, df['Cumulative'], 'b', label='USDINR')
+Strategy, = ax1.plot(df.index, df['Cumulative'], label='Strategy', color='g', marker='.')
+Close, = ax2.plot(df.index, df['Close'], label='USD Close', color='b', marker='.')
+
+curves = [Strategy, Close]
+ax1.legend(curves, [curve.get_label() for curve in curves])
+ax1.set_xlabel('Date', color='k')
+ax1.set_ylabel('Strategy (%age)', color=Strategy.get_color())
+ax2.set_ylabel('Close', color=Close.get_color())
+
+ax1.tick_params(axis='y', colors=Strategy.get_color())
+ax2.tick_params(axis='y', colors=Close.get_color())
+
 plt.title('USDINR Equity Curve')
-plt.xlabel('Date')
-plt.ylabel('Percentage return')
+ax1.grid()
 plt.gcf().autofmt_xdate()
-plt.legend()
+plt.tight_layout()
+plt.show()
+'''
+fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True)
+
+ax1.plot(df.index, df['Cumulative'], 'b', marker='', label='USDINR')
+ax2.plot(df.index, df['Close'], 'k', marker='', label='Close')
+
+ax1.legend()
+ax1.set_title('Equity Curve USDINR')
+ax1.set_ylabel('Strategy %age returns')
+
+ax2.legend()
+ax2.set_xlabel('Date')
+ax2.set_ylabel('USDINR %age returns')
+
+plt.gcf().autofmt_xdate()
 plt.tight_layout()
 plt.show()
